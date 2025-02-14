@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Pagos - Clases de Vóley</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7fc;
+            margin: 20px;
+            padding: 20px;
+        }
+
+        h2, h3 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        input, select, button {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #2980b9;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            border: none;
+        }
+
+        button:hover {
+            background-color: #1f618d;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #34495e;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #ecf0f1;
+        }
+
+        tr:hover {
+            background-color: #d5dbdb;
+        }
+
+        .completo {
+            background-color: #2ecc71 !important;
+            color: white;
+            font-weight: bold;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .incompleto {
+            background-color: #e74c3c !important;
+            color: white;
+            font-weight: bold;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .jugador-item {
+            cursor: pointer;
+            color: #2980b9;
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 5px 0;
+            transition: 0.3s;
+        }
+
+        .jugador-item:hover {
+            color: #1f618d;
+        }
+
+        #detallesPagos {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🏐 Control de Pagos - Clases de Vóley 🏐</h2>
+
+    <h3>👤 Agregar Jugador</h3>
+    <input type="text" id="nombreJugador" placeholder="Nombre del jugador" required>
+    <button onclick="agregarJugador()">Agregar</button>
+
+    <h3>💰 Registrar Pago</h3>
+    <select id="seleccionarJugador">
+        <option value="">Seleccionar jugador</option>
+    </select>
+    <input type="number" id="montoTotal" placeholder="Monto total" required>
+    <input type="number" id="montoAbonado" placeholder="Monto abonado" required>
+    <select id="metodoPago">
+        <option value="Efectivo">Efectivo</option>
+        <option value="Transferencia">Transferencia</option>
+    </select>
+    <input type="date" id="fechaPago">
+    <button onclick="registrarPago()">Registrar Pago</button>
+
+    <h3>📋 Jugadores</h3>
+    <div id="listaJugadores"></div>
+
+    <h3>📅 Detalles de Pagos</h3>
+    <div id="detallesPagos"></div>
+
+    <script>
+        let jugadores = [];
+        let pagos = {};
+
+        function agregarJugador() {
+            let nombre = document.getElementById("nombreJugador").value.trim();
+            if (nombre === "") return alert("Ingrese un nombre de jugador.");
+
+            if (!jugadores.includes(nombre)) {
+                jugadores.push(nombre);
+                pagos[nombre] = [];
+                actualizarListaJugadores();
+                actualizarSelectorJugadores();
+            }
+
+            document.getElementById("nombreJugador").value = "";
+        }
+
+        function actualizarListaJugadores() {
+            let lista = document.getElementById("listaJugadores");
+            lista.innerHTML = "";
+            jugadores.forEach(jugador => {
+                let div = document.createElement("div");
+                div.textContent = jugador;
+                div.classList.add("jugador-item");
+                div.onclick = () => mostrarPagos(jugador);
+                lista.appendChild(div);
+            });
+        }
+
+        function actualizarSelectorJugadores() {
+            let selector = document.getElementById("seleccionarJugador");
+            selector.innerHTML = '<option value="">Seleccionar jugador</option>';
+            jugadores.forEach(jugador => {
+                let option = document.createElement("option");
+                option.value = jugador;
+                option.textContent = jugador;
+                selector.appendChild(option);
+            });
+        }
+
+        function registrarPago() {
+            let nombre = document.getElementById("seleccionarJugador").value;
+            let montoTotal = parseFloat(document.getElementById("montoTotal").value);
+            let montoAbonado = parseFloat(document.getElementById("montoAbonado").value);
+            let metodoPago = document.getElementById("metodoPago").value;
+            let fechaPago = document.getElementById("fechaPago").value;
+
+            if (!nombre || isNaN(montoTotal) || isNaN(montoAbonado) || fechaPago === "") {
+                return alert("Ingrese valores válidos.");
+            }
+
+            let montoRestante = montoTotal - montoAbonado;
+            let pago = { montoTotal, montoAbonado, montoRestante, metodoPago, fechaPago, metodoRestante: "" };
+            pagos[nombre].push(pago);
+            mostrarPagos(nombre);
+        }
+
+        function mostrarPagos(jugador) {
+            let detalles = document.getElementById("detallesPagos");
+            detalles.innerHTML = `<h4>Pagos de ${jugador}</h4>`;
+
+            pagos[jugador].forEach((pago, index) => {
+                let estado = pago.montoRestante === 0 ? "Pago Completo" : "Pendiente";
+                let claseEstado = pago.montoRestante === 0 ? "completo" : "incompleto";
+
+                // Convertir la fecha a un formato más legible
+                let fecha = new Date(pago.fechaPago);
+                let opcionesFecha = { year: 'numeric', month: 'long', day: 'numeric' };
+                let fechaLegible = fecha.toLocaleDateString('es-ES', opcionesFecha);
+
+                detalles.innerHTML += `
+                    <p>
+                        <strong>Monto Total:</strong> $${pago.montoTotal} <br>
+                        <strong>Abonado:</strong> $${pago.montoAbonado} <br>
+                        <strong>Restante:</strong> 
+                        <input type="number" value="${pago.montoRestante}" id="restante-${index}" style="width: 80px;">
+                        <select id="metodoRestante-${index}">
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Transferencia">Transferencia</option>
+                        </select>
+                        <button onclick="editarMonto('${jugador}', ${index})">Editar</button> <br>
+                        <strong>Fecha de Pago:</strong> ${fechaLegible} <br>
+                        <strong>Estado:</strong> <span class="${claseEstado}">${estado}</span> <br>
+                        <strong>Metodo de Pago:</strong> ${pago.metodoPago}
+                    </p>
+                    <hr>
+                `;
+            });
+        }
+
+        function editarMonto(jugador, index) {
+            let nuevoMonto = parseFloat(document.getElementById(`restante-${index}`).value);
+            let metodoRestante = document.getElementById(`metodoRestante-${index}`).value;
+            pagos[jugador][index].montoRestante = nuevoMonto;
+            pagos[jugador][index].metodoRestante = metodoRestante;
+
+            if (nuevoMonto === 0) {
+                pagos[jugador][index].montoAbonado = pagos[jugador][index].montoTotal;
+            }
+            mostrarPagos(jugador);
+        }
+    </script>
+
+</body>
+</html>
